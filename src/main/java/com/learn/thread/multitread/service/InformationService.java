@@ -25,9 +25,19 @@ public class InformationService {
 
   @Async
   public List<Information> saveInformations(MultipartFile file) throws Exception {
+    long startTime = System.currentTimeMillis();
+    log.info("Async task started at {}", startTime, "------------------------------- Thread name: ", Thread.currentThread().getName());
     var infos = parseCSVFile(file);
-    var entities = informationRepo.saveAll(infos);
-    var resp = CompletableFuture.completedFuture(entities);
+    log.info("parsed files in {}",infos);
+
+    try{
+      informationRepo.saveAll(infos);
+    }catch (Exception e){
+      log.error("Failed to save informations {}", e);
+    }
+    long endTime = System.currentTimeMillis();
+    log.info("Async task ended at {}", (endTime-startTime), "------------------------------- Thread name: ", Thread.currentThread().getName());
+    var resp = CompletableFuture.completedFuture(infos);
     return mapper.map(resp);
   }
 
@@ -41,6 +51,8 @@ public class InformationService {
     final List<Information> Informations = new ArrayList<>();
     try {
       try (final BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+        // skip header line
+        br.readLine();
         String line;
         while ((line = br.readLine()) != null) {
           final String[] data = line.split(",");
@@ -58,44 +70,6 @@ public class InformationService {
       throw new Exception("Failed to parse CSV file {}", e);
     }
   }
-
-
-  public void primeNumberto100() {
-    for (int i = 1; i <= 100; i++) {
-      if (i % 2 == 0) {
-        System.out.println(i);
-      }
-    }
-  }
-  
-//  private List<Information> extractInformation(MultipartFile file) {
-//    List<Information> informationList = null;
-//    try {
-//
-//      try {
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-//
-//        String line = reader.readLine();
-//        while (line != null) {
-//          String[] data = line.split(",");
-//          Information information = new Information();
-//          information.setName(data[0]);
-//          information.setEmail(data[1]);
-//          information.setPhone(data[2]);
-//          information.setAddress(data[3]);
-//
-//          informationList.add(information);
-//        }
-//      } catch (Exception e) {
-//        log.error("Error while reading file", e);
-//      }
-//    } catch (Exception e) {
-//      log.error("Error while reading file", e);
-//    }finally{
-//      return informationList;
-//    }
-//    return informationList;
-//  }
   
   
 }
